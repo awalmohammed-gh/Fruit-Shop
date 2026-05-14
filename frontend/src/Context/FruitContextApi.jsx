@@ -69,7 +69,7 @@ export const FruitContextApi = ({ children }) => {
     } else {
       cartData[itemId] = 1;
     }
-    console.log(cartData[itemId]);
+    //console.log(cartData[itemId]);
 
     setCartItems(cartData);
     try {
@@ -210,7 +210,7 @@ export const FruitContextApi = ({ children }) => {
       try {
         const { data } = await productList();
         if (data.success) {
-          console.log(data.products);
+          //console.log(data.products);
           setProducts(data.products);
         } else {
           toast.error(data.message);

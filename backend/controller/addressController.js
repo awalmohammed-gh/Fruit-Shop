@@ -28,7 +28,6 @@ export const addAddress = async (req, res) => {
 
 // get address
 
-
 export const getAddresses = async (req, res) => {
   try {
     const  userId  = req.userId;

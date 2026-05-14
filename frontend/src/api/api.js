@@ -47,33 +47,46 @@ export const sellerLogout = () => {
   return api.post("/seller/seller-logout");
 };
 
-
 //cart
-export const addItemToCart = (data) =>{
+export const addItemToCart = (data) => {
   return api.post("/cart/add-to-cart", data);
-}
+};
 
-
-export const cartData = () =>{
+export const cartData = () => {
   return api.get("/cart/cart-data");
-}
+};
 
+export const removeCart = (data) => {
+  return api.post("/cart/remove-cart", data);
+};
 
-export const removeCart = (data) =>{
-  return api.post("/cart/remove-cart",data);
-}
-
-
-export const updateCart = (data) =>{
-  return api.post("/cart/update-cart",data);
-}
-
+export const updateCart = (data) => {
+  return api.post("/cart/update-cart", data);
+};
 
 //address
-export const createAddress = (data) =>{
-   return api.post("/address/add-address", data);
-}
+export const createAddress = (data) => {
+  return api.post("/address/add-address", data);
+};
 
-export const getAddress = () =>{
-   return api.get("/address/get-address");
-}
+export const getAddress = () => {
+  return api.get("/address/get-address");
+};
+
+//order
+export const orderPlace = (data) => {
+  return api.post("/order/place-order",data);
+};
+
+
+export const getUserOrder = () => {
+  return api.get("/order/user-order");
+};
+
+export const allOrders = () => {
+  return api.get("/order/all-order");
+};
+
+export const updateStatus = (data) => {
+  return api.post("/order/update-status",data);
+};

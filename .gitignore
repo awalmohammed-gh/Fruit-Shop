@@ -1,6 +1,20 @@
+# Dependencies
 frontend/node_modules
 backend/node_modules
+node_modules
+
+# Environment files
 frontend/.env
 backend/.env
+.env
+
+# Build outputs
 dist
 build
+
+# Logs
+npm-debug.log
+yarn-error.log
+
+# OS files
+.DS_Store
