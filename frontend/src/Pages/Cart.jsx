@@ -1,14 +1,16 @@
 import { useEffect, useState } from "react";
 import { useAppContext } from "../Context/FruitContextApi";
-import { dummyAddress } from "../assets/assets";
-import { Plus , MoveLeft  } from "lucide-react";
+import { Plus, MoveLeft } from "lucide-react";
+import { getAddress } from "../api/api";
+import toast from "react-hot-toast";
 
 const Cart = () => {
   const [showAddress, setShowAddress] = useState(false);
-  const [addresses, setAddresses] = useState(dummyAddress);
+  const [addresses, setAddresses] = useState([]);
+  const [selectedAddress, setSelectedAddress] = useState(null);
   const [cartArray, setCartArray] = useState([]);
-  const [selectedAddress, setSelectedAddress] = useState(dummyAddress[0]);
   const [paymentOption, setPaymentOption] = useState("COD");
+
   const {
     products,
     getCartAmount,
@@ -20,39 +22,75 @@ const Cart = () => {
     getCartCount,
   } = useAppContext();
 
-  const getCart = () =>{
-    let temArray = [];
-    for(const itemId in cartItems){
-        const product = products.find((item) => item._id === itemId);
-        product.quantity = cartItems[itemId]
-        temArray.push(product)
+  // CART BUILD
+  const getCart = () => {
+    let tempArray = [];
+
+    for (const itemId in cartItems) {
+      const product = products.find((item) => item._id === itemId);
+
+      if (product) {
+        tempArray.push({
+          ...product,
+          quantity: cartItems[itemId],
+        });
+      }
     }
 
-    setCartArray(temArray)
-  }
+    setCartArray(tempArray);
+  };
 
+  // FETCH ADDRESSES
+  useEffect(() => {
+    const getUserAddress = async () => {
+      try {
+        const { data } = await getAddress();
 
-  const placeOrder = () =>{
+        if (data.success) {
+          const addressList = Array.isArray(data.address)
+            ? data.address
+            : data.address
+              ? [data.address]
+              : [];
 
-  }
+          setAddresses(addressList);
+          setSelectedAddress(addressList.length > 0 ? addressList[0] : null);
+        } else {
+          setAddresses([]);
+          setSelectedAddress(null);
+          toast.error(data.message);
+        }
+      } catch (error) {
+        console.error(error);
+        setAddresses([]);
+        setSelectedAddress(null);
+        toast.error("Failed to get user address");
+      }
+    };
 
-  useEffect(()=>{
-     if(products.length > 0 && cartItems){
-        getCart();
-     }
-  },[products,cartItems])
+    getUserAddress();
+  }, []);
 
+  // BUILD CART
+  useEffect(() => {
+    if (products.length > 0 && cartItems) {
+      getCart();
+    }
+  }, [products, cartItems]);
+
+  const placeOrder = () => {};
 
   return products.length > 0 && cartItems ? (
     <div className="flex flex-col md:flex-row mt-16 px-6 md:px-16 lg:px-24 xl:px-32">
+      {/* LEFT SIDE */}
       <div className="flex-1 max-w-4xl">
         <h1 className="text-3xl font-medium mb-6">
           Shopping Cart{" "}
           <span className="text-lg text-primary">{getCartCount()} Items</span>
         </h1>
 
-        <div className="grid grid-cols-[2fr_1fr_1fr] text-gray-500 text-base font-medium pb-3">
-          <p className="text-left">Product Details</p>
+        <div className="grid grid-cols-[2fr_1fr_1fr] text-gray-500 font-medium pb-3">
+          <p>Product</p>
           <p className="text-center">Subtotal</p>
           <p className="text-center">Action</p>
         </div>
@@ -60,9 +98,9 @@ const Cart = () => {
         {cartArray.map((product, index) => (
           <div
             key={index}
-            className="grid grid-cols-[2fr_1fr_1fr] text-gray-500 items-center text-sm md:text-base font-medium pt-3"
+            className="grid grid-cols-[2fr_1fr_1fr] items-center py-3"
           >
-            <div className="flex items-center md:gap-6 gap-3">
+            <div className="flex items-center gap-3 md:gap-6">
               <div
                 onClick={() => {
                   navigate(
@@ -70,54 +108,46 @@ const Cart = () => {
                   );
                   scrollTo(0, 0);
                 }}
-                className="cursor-pointer w-24 h-24 flex items-center justify-center border border-gray-300 rounded"
+                className="w-24 h-24 border rounded cursor-pointer"
               >
                 <img
-                  className="max-w-full h-full object-cover"
                   src={product.image[0]}
-                  alt={product.name}
+                  className="w-full h-full object-cover"
+                  alt=""
                 />
               </div>
+
               <div>
-                <p className="hidden md:block font-semibold">{product.name}</p>
-                <div className="font-normal text-gray-500/70">
-                  <p>
-                    Weight: <span>{product.weight || "N/A"}</span>
-                  </p>
-                  <div className="flex items-center">
-                    <p>Qty:</p>
-                    <select
-                      onChange={(e) =>
-                        updateCartItem(product._id, Number(e.target.value))
-                      }
-                      value={cartItems[product._id]}
-                      className="outline-none"
-                    >
-                      {Array(
-                        cartItems[product._id] > 10
-                          ? cartItems[product._id]
-                          : 10,
-                      )
-                        .fill("")
-                        .map((_, index) => (
-                          <option key={index} value={index + 1}>
-                            {index + 1}
-                          </option>
-                        ))}
-                    </select>
-                  </div>
-                </div>
+                <p className="font-semibold hidden md:block">{product.name}</p>
+
+                <p className="text-gray-500">
+                  Qty:
+                  <select
+                    value={cartItems[product._id]}
+                    onChange={(e) =>
+                      updateCartItem(product._id, Number(e.target.value))
+                    }
+                    className="ml-2"
+                  >
+                    {Array(10)
+                      .fill("")
+                      .map((_, i) => (
+                        <option key={i} value={i + 1}>
+                          {i + 1}
+                        </option>
+                      ))}
+                  </select>
+                </p>
               </div>
             </div>
+
             <p className="text-center">
               {currency}
               {product.offerPrice * product.quantity}
             </p>
-            <button
-              onClick={() => removeFromCart(product._id)}
-              className="cursor-pointer mx-auto"
-            >
-              <Plus className="rotate-45 text-red-500 cursor-pointer" />
+
+            <button onClick={() => removeFromCart(product._id)}>
+              <Plus className="rotate-45 text-red-500" />
             </button>
           </div>
         ))}
@@ -127,70 +157,82 @@ const Cart = () => {
             navigate("/products");
             scrollTo(0, 0);
           }}
-          className="group cursor-pointer flex items-center mt-8 gap-2 text-primary font-medium"
+          className="flex items-center gap-2 mt-6 text-primary"
         >
           <MoveLeft size={18} />
           Continue Shopping
         </button>
       </div>
 
-      <div className="max-w-[360px] w-full bg-gray-100/40 p-5 max-md:mt-16 border border-gray-300/70">
-        <h2 className="text-xl md:text-xl font-medium">Order Summary</h2>
-        <hr className="border-gray-300 my-5" />
+      {/* RIGHT SIDE */}
+      <div className="max-w-[360px] w-full bg-gray-100/40 p-5 mt-10 border">
+        <h2 className="text-xl font-medium">Order Summary</h2>
+        <hr className="my-4" />
 
-        <div className="mb-6">
-          <p className="text-sm font-medium uppercase">Delivery Address</p>
-          <div className="relative flex justify-between items-start mt-2">
-            <p className="text-gray-500">
-              {selectedAddress
-                ? `${selectedAddress.street},${selectedAddress.city},${selectedAddress.state},${selectedAddress.country}`
-                : "No address found"}
-            </p>
-            <button
-              onClick={() => setShowAddress(!showAddress)}
-              className="text-primary hover:underline cursor-pointer"
-            >
-              Change
-            </button>
-            {showAddress && (
-              <div className="absolute top-12 py-1 bg-white border border-gray-300 text-sm w-full">
-                {addresses.map((address, index) => (
+        {/* ADDRESS */}
+        <p className="text-sm font-medium uppercase">Delivery Address</p>
+
+        <div className="relative mt-2">
+          <p className="text-gray-500">
+            {selectedAddress
+              ? `${selectedAddress.street}, ${selectedAddress.city}, ${selectedAddress.state}, ${selectedAddress.country}`
+              : "No address found"}
+          </p>
+
+          <button
+            onClick={() => setShowAddress((prev) => !prev)}
+            className="text-primary mt-2"
+          >
+            Change
+          </button>
+
+          {showAddress && (
+            <div className="absolute top-12 bg-white border w-full z-10">
+              {addresses.length > 0 ? (
+                addresses.map((address, index) => (
                   <p
                     key={index}
                     onClick={() => {
                       setSelectedAddress(address);
                       setShowAddress(false);
                     }}
-                    className="text-gray-500 p-2 hover:bg-gray-100"
+                    className="p-2 hover:bg-gray-100 cursor-pointer"
                   >
-                    {address.street},{address.city},{address.state},
-                    {address.country},
+                    {address.street}, {address.city}, {address.state},{" "}
+                    {address.country}
                   </p>
-                ))}
-                <p
-                  onClick={() => navigate("/add-address")}
-                  className="text-primary text-center cursor-pointer p-2 hover:bg-primary/10"
-                >
-                  Add address
+                ))
+              ) : (
+                <p className="p-2 text-gray-500 text-center">
+                  No addresses found
                 </p>
-              </div>
-            )}
-          </div>
+              )}
 
-          <p className="text-sm font-medium uppercase mt-6">Payment Method</p>
-
-          <select
-            onChange={(e) => setPaymentOption(e.target.value)}
-            className="w-full border border-gray-300 bg-white px-3 py-2 mt-2 outline-none"
-          >
-            <option value="COD">Cash On Delivery</option>
-            <option value="Online">Online Payment</option>
-          </select>
+              <p
+                onClick={() => navigate("/add-address")}
+                className="p-2 text-primary text-center cursor-pointer hover:bg-primary/10"
+              >
+                Add address
+              </p>
+            </div>
+          )}
         </div>
 
-        <hr className="border-gray-300" />
+        {/* PAYMENT */}
+        <p className="text-sm font-medium uppercase mt-6">Payment Method</p>
 
-        <div className="text-gray-500 mt-4 space-y-2">
+        <select
+          onChange={(e) => setPaymentOption(e.target.value)}
+          className="w-full border px-3 py-2 mt-2"
+        >
+          <option value="COD">Cash On Delivery</option>
+          <option value="Online">Online Payment</option>
+        </select>
+
+        <hr className="my-4" />
+
+        {/* TOTAL */}
+        <div className="space-y-2 text-gray-500">
           <p className="flex justify-between">
             <span>Price</span>
             <span>
@@ -198,10 +240,7 @@ const Cart = () => {
               {getCartAmount().toFixed(2)}
             </span>
           </p>
-          <p className="flex justify-between">
-            <span>Shipping Fee</span>
-            <span className="text-green-600">Free</span>
-          </p>
+
           <p className="flex justify-between">
             <span>Tax (3%)</span>
             <span>
@@ -209,20 +248,19 @@ const Cart = () => {
               {((getCartAmount() * 3) / 100).toFixed(2)}
             </span>
           </p>
-          <p className="flex justify-between text-lg font-medium mt-3">
-            <span>Total Amount:</span>
+
+          <p className="flex justify-between font-medium text-lg">
+            <span>Total</span>
             <span>
               {currency}
-              {getCartAmount() === 0
-                ? "0.00"
-                : (getCartAmount() + (getCartAmount() * 3) / 100).toFixed(2)}
+              {(getCartAmount() + (getCartAmount() * 3) / 100).toFixed(2)}
             </span>
           </p>
         </div>
 
         <button
           onClick={placeOrder}
-          className="w-full py-3 mt-6 cursor-pointer bg-primary text-white font-medium hover:bg-primary-dull transition"
+          className="w-full mt-6 py-3 bg-primary text-white"
         >
           {paymentOption === "COD" ? "Place Order" : "Proceed to Checkout"}
         </button>

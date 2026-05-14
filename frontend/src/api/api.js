@@ -73,3 +73,7 @@ export const updateCart = (data) =>{
 export const createAddress = (data) =>{
    return api.post("/address/add-address", data);
 }
+
+export const getAddress = () =>{
+   return api.get("/address/get-address");
+}

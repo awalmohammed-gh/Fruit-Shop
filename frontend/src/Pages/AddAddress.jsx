@@ -70,6 +70,7 @@ const AddAddress = () => {
 
       if (data.success) {
         toast.success(data.message);
+        setAddress("")
       } else {
         toast.error(data.message);
       }

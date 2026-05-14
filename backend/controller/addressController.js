@@ -5,7 +5,7 @@ import userModel from "../models/User.js";
 
 export const addAddress = async (req, res) => {
   try {
-    const { address } = req.body;
+    const { ...address } = req.body;
     const userId = req.userId
 
     const user = await userModel.findById(userId);
@@ -31,7 +31,7 @@ export const addAddress = async (req, res) => {
 
 export const getAddresses = async (req, res) => {
   try {
-    const { userId } = req.body;
+    const  userId  = req.userId;
 
     const addresses = await Address.find({userId});
     if (!addresses)
